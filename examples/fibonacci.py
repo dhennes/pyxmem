@@ -2,7 +2,7 @@
 from pyxmem import memorize
 
 
-@memorize
+@memorize()
 def fibonacci(n):
     """Returns the n-th fibonacci number."""
     print ".",
@@ -11,7 +11,8 @@ def fibonacci(n):
     return fibonacci(n-1) + fibonacci(n-2)
 
 
-@memorize
+d = {}
+@memorize(cache=d)
 def identity(n):
     """Returns the input."""
     print ".",
@@ -26,8 +27,16 @@ for n in xrange(10):
 for n in xrange(10):
     print fibonacci(n)
 
-# print all keys in cache
-print fibonacci._cache.keys()
+# same, now loaded from cache
+for n in xrange(10):
+    print identity(n)
+
+# same, now loaded from cache
+for n in xrange(10):
+    print identity(n)
+
+print d.keys()
+
 
 # TODO: write tests for:
 # * recursion

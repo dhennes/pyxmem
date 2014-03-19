@@ -50,9 +50,4 @@ class RedisCache(object):
         for key in self._redis.keys(self._prefix + "*"):
             self._redis.delete(key)
 
-
-class RedisMemorizer(Memorizer):
-    _cache = RedisCache()
-
-# decorator short handle
-memorize = RedisMemorizer
+memorize = Memorizer(cache=RedisCache())

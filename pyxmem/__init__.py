@@ -10,6 +10,11 @@ pyxmem
 
 import hashlib
 import pickle
+import functools
+
+import logging
+logging.basicConfig(level=logging.INFO)  # DEBUG)
+logger = logging.getLogger(__name__)
 
 
 class Memorizer(object):
@@ -22,21 +27,31 @@ class Memorizer(object):
 
     _cache = dict()
 
-    def __init__(self, func):
-        self._func = func
-        self.__name__ = func.__name__
-        self.__doc__ = func.__doc__
-        self.__repr__ = func.__repr__
+    def __init__(self, cache=None):
+        if cache is not None:
+            self._cache = cache
+        logger.debug("Created Memorizer with cache: %s : %s" %
+                     (type(self._cache), self._cache))
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, func):
         """Returns cached result or calls functions and caches value."""
-        key = self._get_key(*args, **kwargs)
-        if key in self._cache:
-            return self._cache[key]
-        else:
-            value = self._func(*args, **kwargs)
-            self._cache[key] = value
-            return value
+        self._func = func
+
+        @functools.wraps(func)  # reset docstring and name
+        def decorated(*args, **kwargs):
+            key = self._get_key(*args, **kwargs)
+            if key in self._cache:
+                logger.debug("Retrieved result from cache: %s" % key)
+                return self._cache[key]
+            else:
+                value = self._func(*args, **kwargs)
+                self._cache[key] = value
+                logger.debug("Stored result in cache: %s" % key)
+                return value
+
+        # FIXME: should the user have access to the cache like this?
+        decorated._cache = self._cache
+        return decorated
 
     def _get_key(self, *args, **kwargs):
         """Computes a hash using function name, args and kwargs."""
@@ -59,5 +74,11 @@ class Memorizer(object):
 #        return functools.partial(self.__call__, obj)
 
 
-# decorator short handle
-memorize = Memorizer
+def memorize(*args, **kwargs):
+    """Decorator short handle.
+    Works for @memorize and @memorize() and @memorize(args, kwargs) alike.
+    """
+    if not kwargs and len(args) == 1 and callable(args[0]):
+        return Memorizer()(args[0])
+    else:
+        return Memorizer(*args, **kwargs)
