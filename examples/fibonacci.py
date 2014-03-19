@@ -2,7 +2,7 @@
 from pyxmem import memorize
 
 
-@memorize()
+@memorize
 def fibonacci(n):
     """Returns the n-th fibonacci number."""
     print ".",
